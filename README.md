@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YARA — Plataforma de Prevención y Alertas de Seguridad Ciudadana (MVP)
 
-## Getting Started
+Prototipo funcional del proyecto YARA (Grupo 5 · CIBERTEC). Stack definido en el Entregable 2:
 
-First, run the development server:
+- **Frontend:** Next.js 16 (App Router) + React 19 + Tailwind CSS 4 → despliegue en **Vercel**
+- **Backend:** **Supabase** — PostgreSQL con Row Level Security, Supabase Auth, Realtime y Storage
+- **Mapas:** Leaflet + OpenStreetMap (sin API key); búsqueda de direcciones con Nominatim
+
+## Funcionalidades del MVP
+
+| Módulo | Detalle |
+| --- | --- |
+| Registro y autenticación | Registro con consentimiento (Ley N.° 29733), login, rutas protegidas por `proxy.ts`, roles USER / ADMIN |
+| Registro de incidentes | Tipo, ubicación (búsqueda, GPS o marcador arrastrable), fecha y hora, gravedad, descripción (500 car.) y hasta 3 fotos |
+| Alertas en tiempo real | Al publicar un reporte, un trigger crea la alerta y notifica a los vecinos; campana + aviso emergente vía Supabase Realtime |
+| Mapa y listado | Mapa de alertas con filtros por periodo, estado y tipo (BPMN paso 7) |
+| Mis reportes | Pestañas Todos / En proceso / Atendidos con paginación |
+| Detalle | Fotos, mapa, validación comunitaria (Confirmo / Yo lo vi / Importante) y comentarios |
+| Administración | Indicadores, moderación (atendido / ocultar / eliminar), comunicados a todos, gestión de usuarios y bitácora de auditoría |
+| Privacidad | Los reportes son anónimos: la vista pública `incident_feed` no expone al autor |
+
+El modelo de datos sigue el ERD del entregable (`supabase/migrations/20261010000000_init.sql`).
+
+## Ejecutar en local
+
+Requisitos: Node 20+, Docker.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx supabase start          # levanta Postgres, Auth, Realtime y Storage; aplica migración y seed
+cp .env.example .env.local  # usa la URL y PUBLISHABLE_KEY que imprime "supabase start"
+npm run dev                 # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Cuentas de demostración (contraseña `Yara2026!`): `vecino@yara.pe`, `vecina@yara.pe`, `admin@yara.pe` (ADMIN).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Studio (BD): http://127.0.0.1:54323 · Reiniciar datos: `npx supabase db reset`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Despliegue (entorno de pruebas)
 
-## Learn More
+1. Crear un proyecto en Supabase y aplicar el esquema: `npx supabase link --project-ref <ref> && npx supabase db push`.
+   El `seed.sql` es solo para local (crea usuarios demo); en la nube crea el admin registrándote y ejecutando
+   `update profiles set role = 'ADMIN' where email = '<tu-correo>';`.
+2. En Supabase → Authentication → URL Configuration, define la URL del sitio de Vercel.
+3. Importar el repo en Vercel y configurar `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
-To learn more about Next.js, take a look at the following resources:
+## Fuera de alcance del MVP (según sección 2.2)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Integración con PNP / municipalidades, validación oficial de reportes, apps nativas, notificaciones por
+correo/push y notificación por cercanía geográfica (hoy se notifica a toda la comunidad piloto).
